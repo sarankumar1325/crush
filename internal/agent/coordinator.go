@@ -17,6 +17,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"charm.land/catwalk/pkg/catwalk"
@@ -176,11 +177,9 @@ type coordinator struct {
 	models    csync.Value[coordinatorModels]
 	rebuildMu sync.Mutex
 
-	// overrideModels holds the shared builds of per-dispatch model overrides,
-	// so dispatching twice on the same selection does not rebuild its
-	// provider. Every entry is refreshed whenever the shared models are
-	// rebuilt, so an override picks up credential and config changes the same
-	// way the shared models do.
+	// modelsGen counts rebuilds; override models rebuild when it moves.
+	modelsGen atomic.Uint64
+	// overrideModels shares builds of per-dispatch model overrides.
 	overrideModelsMu sync.Mutex
 	overrideModels   map[overrideModelKey]*overrideModel
 
